@@ -5,43 +5,65 @@ import static org.mockito.Mockito.when;
 
 import java.util.function.BiFunction;
 
+import victor.clean.lambdas.Movie.Type;
+
 class Movie {
 	enum Type {
-		REGULAR {
-			public int computePrice(int days) {
-				return days +1; // TODO
-			}
-		}, NEW_RELEASE {
-			public int computePrice(int days) {
-				return days * 2; // TODO
-			}
-		}, CHILDREN {
-			public int computePrice(int days) {
-				return 5; // TODO
-			}
-		};
-		public abstract int computePrice(int days);
-		
-		
+		REGULAR, NEW_RELEASE, CHILDREN;
 	}
-	
+
 	private final Type type;
-	
+
 	public Movie(Type type) {
 		this.type = type;
 	}
 
-	public int computePrice(int days) {
-		return type.computePrice(days);
-	}
 }
 
+interface FactorRepo {
+	Double getFactor();
+}
+
+class PriceService {
+	private final FactorRepo repo;
+	
+
+	public PriceService(FactorRepo repo) {
+		this.repo = repo;
+	}
+
+	protected Integer computeNewReleasePrice(int days) {
+		return (int) (repo.getFactor() * days);
+	}
+
+	protected Integer computeRegularPrice(int days) {
+		return days + 1;
+
+	}
+
+	protected Integer computeChildrenPrice(int days) {
+		return 5;
+	}
+	
+	public Integer computePrice(Movie.Type type, int days ) {
+		switch (type) {
+		case NEW_RELEASE: return computeNewReleasePrice(days);
+		case REGULAR: return computeRegularPrice(days);
+		case CHILDREN: return computeChildrenPrice(days);
+		default : throw new IllegalArgumentException();
+		}
+	}
+
+}
 
 public class E__TypeSpecific_Functionality {
 	public static void main(String[] args) {
-		System.out.println(new Movie(Movie.Type.REGULAR).computePrice(2));
-		System.out.println(new Movie(Movie.Type.NEW_RELEASE).computePrice(2));
-		System.out.println(new Movie(Movie.Type.CHILDREN).computePrice(2));
+		FactorRepo repo = mock(FactorRepo.class);
+		when(repo.getFactor()).thenReturn(2d);
+		PriceService priceService = new PriceService(repo);
+		System.out.println(priceService.computePrice(Type.REGULAR, 2));
+		System.out.println(priceService.computePrice(Type.NEW_RELEASE, 2));
+		System.out.println(priceService.computePrice(Type.CHILDREN, 2));
 		System.out.println("COMMIT now!");
 	}
 }
