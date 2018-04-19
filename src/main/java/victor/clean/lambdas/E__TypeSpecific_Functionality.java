@@ -7,7 +7,22 @@ import java.util.function.BiFunction;
 
 class Movie {
 	enum Type {
-		REGULAR, NEW_RELEASE, CHILDREN, ELDER
+		REGULAR {
+			public int computePrice(int days) {
+				return days +1; // TODO
+			}
+		}, NEW_RELEASE {
+			public int computePrice(int days) {
+				return days * 2; // TODO
+			}
+		}, CHILDREN {
+			public int computePrice(int days) {
+				return 5; // TODO
+			}
+		};
+		public abstract int computePrice(int days);
+		
+		
 	}
 	
 	private final Type type;
@@ -17,28 +32,16 @@ class Movie {
 	}
 
 	public int computePrice(int days) {
-		switch (type) {
-		case REGULAR: return days + 1;
-		case NEW_RELEASE: return days * 2;
-		case CHILDREN: return 5;
-		case ELDER: return 1;
-		default: throw new IllegalArgumentException("JDD: hope it never happens: " + type);
-		}
+		return type.computePrice(days);
 	}
 }
 
 
-
-
-
-
-
-
 public class E__TypeSpecific_Functionality {
 	public static void main(String[] args) {
-		 System.out.println(new Movie(Movie.Type.REGULAR).computePrice(2));
-		 System.out.println(new Movie(Movie.Type.NEW_RELEASE).computePrice(2));
-		 System.out.println(new Movie(Movie.Type.CHILDREN).computePrice(2));
+		System.out.println(new Movie(Movie.Type.REGULAR).computePrice(2));
+		System.out.println(new Movie(Movie.Type.NEW_RELEASE).computePrice(2));
+		System.out.println(new Movie(Movie.Type.CHILDREN).computePrice(2));
 		System.out.println("COMMIT now!");
 	}
 }
