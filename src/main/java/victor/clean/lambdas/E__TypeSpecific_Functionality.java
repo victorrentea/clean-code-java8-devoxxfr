@@ -9,7 +9,14 @@ import victor.clean.lambdas.Movie.Type;
 
 class Movie {
 	enum Type {
-		REGULAR, NEW_RELEASE, CHILDREN;
+		REGULAR(PriceService::computeRegularPrice), 
+		NEW_RELEASE(PriceService::computeNewReleasePrice), 
+		CHILDREN(PriceService::computeChildrenPrice);
+		public final BiFunction<PriceService, Integer, Integer> priceAlgo;
+
+		private Type(BiFunction<PriceService, Integer, Integer> priceAlgo) {
+			this.priceAlgo = priceAlgo;
+		}
 	}
 
 	private final Type type;
@@ -38,7 +45,6 @@ class PriceService {
 
 	protected Integer computeRegularPrice(int days) {
 		return days + 1;
-
 	}
 
 	protected Integer computeChildrenPrice(int days) {
@@ -46,12 +52,7 @@ class PriceService {
 	}
 	
 	public Integer computePrice(Movie.Type type, int days ) {
-		switch (type) {
-		case NEW_RELEASE: return computeNewReleasePrice(days);
-		case REGULAR: return computeRegularPrice(days);
-		case CHILDREN: return computeChildrenPrice(days);
-		default : throw new IllegalArgumentException();
-		}
+		return type.priceAlgo.apply(this, days);
 	}
 
 }
