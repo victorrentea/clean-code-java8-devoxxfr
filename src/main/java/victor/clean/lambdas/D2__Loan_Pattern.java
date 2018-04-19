@@ -12,22 +12,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+// export all orders to a file
+
 interface OrderRepo extends JpaRepository<Order, Long> { // J'aime Spring Data!
 	Stream<Order> findByActiveTrue(); // 1 Mln orders ;)
 }
-
-class OrderExporter {
-	private OrderRepo repo;
+class FileExporter {
+	private final static Logger log = LoggerFactory.getLogger(FileExporter.class);
 			
-	public File exportFile(String fileName) {
-		log.debug("Start");
+	public File exportFile(String fileName, Consumer<Writer> contentWriter) throws Exception {
 		File file = new File("export/" + fileName);
 		try (Writer writer = new FileWriter(file)) {
-			writer.write("OrderID;Date\n");
-			repo.findByActiveTrue()
-				.map(o -> o.getId() + ";" + o.getCreationDate())
-				.forEach(writer::write);
-			log.debug("Done");
+			contentWriter.accept(writer);
 			return file;
 		} catch (Exception e) {
 			// TODO send email notification
@@ -35,5 +31,32 @@ class OrderExporter {
 			throw e;
 		}
 	}
+	
+	public static void main(String[] args) throws Exception {
+		FileExporter fileExporter = new FileExporter();
+		OrderExporterWriter orderExporterWriter = new OrderExporterWriter();
+		UserExporterWriter userExporterWriter = new UserExporterWriter();
+		
+		fileExporter.exportFile("orders.txt", Unchecked.consumer(orderExporterWriter::writeContent));
+		fileExporter.exportFile("users.txt", Unchecked.consumer(userExporterWriter::writeContent));
+	}
+}
+class OrderExporterWriter {
+	private OrderRepo repo;
+	public void writeContent(Writer writer) throws IOException {
+		writer.write("OrderID;Date\n");
+		try (Stream<Order> stream = repo.findByActiveTrue()) {
+			stream
+				.map(o -> o.getId() + ";" + o.getCreationDate())
+				.forEach(Unchecked.consumer(writer::write));
+		}
+	}
 }
 
+class UserExporterWriter extends FileExporter {
+	public void writeContent(Writer writer) throws IOException {
+		// Neahhh!
+		// TODO write User export contnt instead
+	}
+}
+// CR: implement the same export for Users

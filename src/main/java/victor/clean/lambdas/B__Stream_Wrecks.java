@@ -13,23 +13,39 @@ import java.util.stream.Stream;
 
 import lombok.Data;
 
-
+// get the products frequently ordered during the past year
 
 class ProductService {
+	private ProductRepo productRepo;
+
 	public List<Product> getFrequentOrderedProducts(List<Order> orders) {
-		return orders.stream()
-				.filter(o -> o.getCreationDate().isAfter(LocalDate.now().minusYears(1)))
-				.flatMap(o -> o.getOrderLines().stream())
-				.collect(groupingBy(OrderLine::getProduct, summingInt(OrderLine::getItemCount)))
-				.entrySet()
-				.stream()
-				.filter(e -> e.getValue() >= 10)
-				.map(Entry::getKey)
-				.filter(p -> !p.isDeleted())
-				.filter(p-> !productRepo.getHiddenProductIds().contains(p.getId()))
+		List<Long> hiddenProductIds = productRepo.getHiddenProductIds();
+		Predicate<Product> productIsNotHidden = p-> !hiddenProductIds.contains(p.getId());
+		return getFrequentProductsOverTheLastYear(orders)
+				.filter(Product::isNotDeleted)
+				.filter(productIsNotHidden)
 				.collect(toList());
 	}
+
+	private Stream<Product> getFrequentProductsOverTheLastYear(List<Order> orders) {
+		return getProductCounts(orders).entrySet().stream()
+				.filter(e -> e.getValue() >= 10)
+				.map(Entry::getKey);
+	}
+
+	private Map<Product, Integer> getProductCounts(List<Order> orders) {
+		return orders.stream()
+				.filter(this::orderWasCreatedDuringThePreviousYear)
+				.flatMap(o -> o.getOrderLines().stream())
+				.collect(groupingBy(OrderLine::getProduct, summingInt(OrderLine::getItemCount)));
+	}
+
+	private boolean orderWasCreatedDuringThePreviousYear(Order o) {
+		return o.getCreationDate().isAfter(LocalDate.now().minusYears(1));
+	}
 }
+
+
 
 
 
@@ -51,6 +67,9 @@ class OrderLine {
 
 @Data
 class Product {
+	public boolean isNotDeleted() {
+		return !deleted;
+	}
 	private Long id;
 	private boolean deleted;
 }
