@@ -5,6 +5,22 @@ import static org.mockito.Mockito.when;
 
 import java.util.function.BiFunction;
 
+class Movie {
+	enum Type {
+		REGULAR, NEW_RELEASE, CHILDREN
+	}
+	
+	private final Type type;
+	
+	public int computePrice(int days) {
+		switch (type) {
+		case REGULAR: return days + 1;
+		case NEW_RELEASE: return days * 2;
+		case CHILDREN: return 5;
+		}
+		return 0; // ?!.. Free!! Deducted from your salary!
+	}
+}
 
 
 
